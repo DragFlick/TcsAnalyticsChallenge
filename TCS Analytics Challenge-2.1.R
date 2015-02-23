@@ -140,9 +140,6 @@ DATA01$ProcedureID <- as.character(DATA01$ProcedureID)
 DATA01$ProcedureID <- substr(DATA01$ProcedureID  ,56 , 72 )
 
 
-
-
-
 levels(DATA02$PhenomenonID) <- c("JourneyDirection" , "Location" , "RouteID" , "Speed")
 levels(DATA02$FeatureOfIntrest) <- c("00409DFF-FF581776")
 levels(DATA02$ProcedureID) <- "00409DFF-FF581776"
@@ -168,194 +165,258 @@ levels(DATA06$ProcedureID) <- "00409DFF-FF581794"
 
 
 
-## Cleaning Up the Latitude and Longitude Data and ## 
 
+############################################################################################################################
 
-coordinates <- as.character(DATA01$Location)
-Index <- grepl("POINT" , as.character(coordinates))
+###  Cleaning Up the Latitude and Longitude Data and Merging it With Speed Data for Data Frame DATA01  ###
+
+## First subsetting the location data and thereafter Identifying the GPS data 
+## and extracting Longitude and Latitude data from it 
+
+LocationDATA01 <- DATA01[DATA01$PhenomenonID == "Location" ,] 
+coordinates <- as.character(LocationDATA01$Location)
+Index <- grepl("^POINT" , as.character(coordinates)) 
+LocationDATA01 <- LocationDATA01[Index, ] 
 coordinates[Index] <- substr(coordinates[Index] , start = 7 , stop = nchar(coordinates[Index]) - 1 )
-longitude <- character(length(coordinates))
-latitude <- character(length(coordinates))
+coordinates <- coordinates[Index]
+LocationDATA01$GPSXY <- coordinates
+LocationDATA01 <- LocationDATA01[,-c(9:10)]
+gpsdata <- strsplit(coordinates , " ") 
+Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
+Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
+Longitude <- as.numeric(Longitude)
+Latitude <- as.numeric(Latitude)
+LocationDATA01$Longitude  <- Longitude
+LocationDATA01$Latitude  <- Latitude
+LocationDATA01$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA01$TimeStamp))))
 
-for( count in 1: length(coordinates))
-{
-        if( Index[count])
-        {
-                longitude[count] <-  strsplit(coordinates[count], split = " " , fixed = TRUE)[[1]][1]
-                latitude[count]  <-  strsplit(coordinates[count], split = " " , fixed = TRUE )[[1]][2]        
-        }
-        
-        else
-        {
-                
-                longitude[count] <- NA
-                latitude[count]  <- NA
-        }
-}
-     
-        
-DATA01 <- transform(DATA01 , Longitude = as.character(longitude) , Latitude = as.character(latitude) , TS = as.POSIXct(TimeStamp))
-rm("Index" , "longitude" ,"latitude" , "coordinates")
+## Shortlisting Speed Data
 
-### 
+SpeedDATA01 <- DATA01[DATA01$PhenomenonID == "Speed" ,]
+SpeedDATA01 <- SpeedDATA01[,c("TimeStamp" , "NumericValue")]
+SpeedDATA01$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA01$TimeStamp))))
 
-Index <- complete.cases(DATA02[,c("Location")])
-coordinates <- as.character(DATA02$Location)
-Index <- grepl("POINT" , as.character(coordinates))
+## Final Speed and Location Data Corresponding to DATA01 . Also adding Direction and Route ID to the data
+
+FinalDATA01 <- merge(LocationDATA01 , SpeedDATA01 , by = "TS" )
+FinalDATA01 <- transform(FinalDATA01 , RouteID = "K3" , Direction = "PickUp")
+rm("SpeedDATA01","LocationDATA01","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
+
+
+#####################################################################################################################
+
+
+###  Cleaning Up the Latitude and Longitude Data and Merging it With Speed Data for Data Frame DATA02  ###
+
+
+## First subsetting the location data and thereafter Identifying the GPS data 
+## and extracting Longitude and Latitude data from it 
+
+
+LocationDATA02 <- DATA02[DATA02$PhenomenonID == "Location" ,] 
+coordinates <- as.character(LocationDATA02$Location)
+
+
+Index <- grepl("^POINT" , as.character(coordinates)) 
+
+LocationDATA02 <- LocationDATA02[Index, ] 
 coordinates[Index] <- substr(coordinates[Index] , start = 7 , stop = nchar(coordinates[Index]) - 1 )
-longitude <- character(length(coordinates))
-latitude <- character(length(coordinates))
+coordinates <- coordinates[Index]
+LocationDATA02$GPSXY <- coordinates
+LocationDATA02 <- LocationDATA02[,-c(9:10)]
+gpsdata <- strsplit(coordinates , " ") 
+Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
+Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
+Longitude <- as.numeric(Longitude)
+Latitude <- as.numeric(Latitude)
+LocationDATA02$Longitude  <- Longitude
+LocationDATA02$Latitude  <- Latitude
+LocationDATA02$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA02$TimeStamp))))
 
-for( count in 1: length(coordinates))
-{
-        if( Index[count])
-        {
-                longitude[count] <-  strsplit(coordinates[count], split = " " , fixed = TRUE)[[1]][1]
-                latitude[count]  <-  strsplit(coordinates[count], split = " " , fixed = TRUE )[[1]][2]        
-        }
-        
-        else
-        {
-                
-                longitude[count] <- NA
-                latitude[count]  <- NA
-        }
-}
+## Shortlisting Speed Data
 
-## Assimilating Longitude and Latitude Data to Original DataFrame
+SpeedDATA02 <- DATA02[DATA02$PhenomenonID == "Speed" ,]
+SpeedDATA02 <- SpeedDATA02[,c("TimeStamp" , "NumericValue")]
+SpeedDATA02$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA02$TimeStamp))))
 
-DATA02 <- transform(DATA02 , Longitude = longitude , Latitude = latitude , TS = as.POSIXct(TimeStamp))
-rm("Index" , "longitude" ,"latitude" , "coordinates")
+## Final Speed and Location Data Corresponding to DATA02 . Also adding Direction and Route ID to the data
 
-###########
+FinalDATA02 <- merge(LocationDATA02 , SpeedDATA02 , by = "TS" )
+FinalDATA02 <- transform(FinalDATA02 , RouteID = "E1" , Direction = "PickUp")
+rm("SpeedDATA02","LocationDATA02","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
 
-Index <- complete.cases(DATA03[,c("Location")])
-coordinates <- as.character(DATA03$Location)
-Index <- grepl("POINT" , as.character(coordinates))
+
+
+###################################################################################################################
+
+###  Cleaning Up the Latitude and Longitude Data and Merging it With Speed Data for Data Frame DATA03  ###
+
+
+## First subsetting the location data and thereafter Identifying the GPS data 
+## and extracting Longitude and Latitude data from it 
+
+
+LocationDATA03 <- DATA03[DATA03$PhenomenonID == "Location" ,] 
+coordinates <- as.character(LocationDATA03$Location)
+Index <- grepl("^POINT" , as.character(coordinates)) 
+LocationDATA03 <- LocationDATA03[Index, ] 
 coordinates[Index] <- substr(coordinates[Index] , start = 7 , stop = nchar(coordinates[Index]) - 1 )
-longitude <- character(length(coordinates))
-latitude <- character(length(coordinates))
+coordinates <- coordinates[Index]
+LocationDATA03$GPSXY <- coordinates
+LocationDATA03 <- LocationDATA03[,-c(9:10)]
+gpsdata <- strsplit(coordinates , " ") 
+Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
+Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
+Longitude <- as.numeric(Longitude)
+Latitude <- as.numeric(Latitude)
+LocationDATA03$Longitude  <- Longitude
+LocationDATA03$Latitude  <- Latitude
+LocationDATA03$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA03$TimeStamp))))
 
-for( count in 1: length(coordinates))
-{
-        if( Index[count])
-        {
-                longitude[count] <-  strsplit(coordinates[count], split = " " , fixed = TRUE)[[1]][1]
-                latitude[count]  <-  strsplit(coordinates[count], split = " " , fixed = TRUE )[[1]][2]        
-        }
-        
-        else
-        {
-                
-                longitude[count] <- NA
-                latitude[count]  <- NA
-        }
-}
+## Shortlisting Speed Data
 
-## Assimilating Longitude and Latitude Data to Original DataFrame
+SpeedDATA03 <- DATA03[DATA03$PhenomenonID == "Speed" ,]
+SpeedDATA03 <- SpeedDATA03[,c("TimeStamp" , "NumericValue")]
+SpeedDATA03$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA03$TimeStamp))))
 
-DATA03 <- transform(DATA03 , Longitude = longitude , Latitude = latitude , TS = as.POSIXct(TimeStamp))
-rm("Index" , "longitude" ,"latitude" , "coordinates")
+## Final Speed and Location Data Corresponding to DATA03 . Also adding Direction and Route ID to the data
 
-#############
+FinalDATA03 <- merge(LocationDATA03 , SpeedDATA03 , by = "TS" )
+FinalDATA03 <- transform(FinalDATA03 , RouteID = "K1" , Direction = "PickUp")
+rm("SpeedDATA03","LocationDATA03","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
 
 
-Index <- complete.cases(DATA04[,c("Location")])
-coordinates <- as.character(DATA04$Location)
-Index <- grepl("POINT" , as.character(coordinates))
+
+
+
+
+######################################################################################################################
+
+
+
+###  Cleaning Up the Latitude and Longitude Data and Merging it With Speed Data for Data Frame DATA04  ###
+
+
+## First subsetting the location data and thereafter Identifying the GPS data 
+## and extracting Longitude and Latitude data from it 
+
+
+LocationDATA04 <- DATA04[DATA04$PhenomenonID == "Location" ,] 
+coordinates <- as.character(LocationDATA04$Location)
+Index <- grepl("^POINT" , as.character(coordinates)) 
+LocationDATA04 <- LocationDATA04[Index, ] 
 coordinates[Index] <- substr(coordinates[Index] , start = 7 , stop = nchar(coordinates[Index]) - 1 )
-longitude <- character(length(coordinates))
-latitude <- character(length(coordinates))
+coordinates <- coordinates[Index]
+LocationDATA04$GPSXY <- coordinates
+LocationDATA04 <- LocationDATA04[,-c(9:10)]
+gpsdata <- strsplit(coordinates , " ") 
+Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
+Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
+Longitude <- as.numeric(Longitude)
+Latitude <- as.numeric(Latitude)
+LocationDATA04$Longitude  <- Longitude
+LocationDATA04$Latitude  <- Latitude
+LocationDATA04$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA04$TimeStamp))))
 
-for( count in 1: length(coordinates))
-{
-        if( Index[count])
-        {
-                longitude[count] <-  strsplit(coordinates[count], split = " " , fixed = TRUE)[[1]][1]
-                latitude[count]  <-  strsplit(coordinates[count], split = " " , fixed = TRUE )[[1]][2]        
-        }
-        
-        else
-        {
-                
-                longitude[count] <- NA
-                latitude[count]  <- NA
-        }
-}
+## Shortlisting Speed Data
 
-## Assimilating Longitude and Latitude Data to Original DataFrame
+SpeedDATA04 <- DATA04[DATA04$PhenomenonID == "Speed" ,]
+SpeedDATA04 <- SpeedDATA04[,c("TimeStamp" , "NumericValue")]
+SpeedDATA04$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA04$TimeStamp))))
 
-DATA04 <- transform(DATA04 , Longitude = longitude , Latitude = latitude , TS = as.POSIXct(TimeStamp))
-rm("Index" , "longitude" ,"latitude" , "coordinates")
+## Final Speed and Location Data Corresponding to DATA04 . Also adding Direction and Route ID to the data
+
+FinalDATA04 <- merge(LocationDATA04 , SpeedDATA04 , by = "TS" )
+FinalDATA04 <- transform(FinalDATA04 , RouteID = "K4" , Direction = "PickUp")
+
+rm("SpeedDATA04","LocationDATA04","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
 
 
-#######
+######################################################################################################################
 
-Index <- complete.cases(DATA05[,c("Location")])
-coordinates <- as.character(DATA05$Location)
-Index <- grepl("POINT" , as.character(coordinates))
+
+###  Cleaning Up the Latitude and Longitude Data and Merging it With Speed Data for Data Frame DATA05  ###
+
+
+## First subsetting the location data and thereafter Identifying the GPS data 
+## and extracting Longitude and Latitude data from it 
+
+
+LocationDATA05 <- DATA05[DATA05$PhenomenonID == "Location" ,] 
+coordinates <- as.character(LocationDATA05$Location)
+Index <- grepl("^POINT" , as.character(coordinates)) 
+LocationDATA05 <- LocationDATA05[Index, ] 
 coordinates[Index] <- substr(coordinates[Index] , start = 7 , stop = nchar(coordinates[Index]) - 1 )
-longitude <- character(length(coordinates))
-latitude <- character(length(coordinates))
+coordinates <- coordinates[Index]
+LocationDATA05$GPSXY <- coordinates
+LocationDATA05 <- LocationDATA05[,-c(9:10)]
+gpsdata <- strsplit(coordinates , " ") 
+Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
+Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
+Longitude <- as.numeric(Longitude)
+Latitude <- as.numeric(Latitude)
+LocationDATA05$Longitude  <- Longitude
+LocationDATA05$Latitude  <- Latitude
+LocationDATA05$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA05$TimeStamp))))
 
-for( count in 1: length(coordinates))
-{
-        if( Index[count])
-        {
-                longitude[count] <-  strsplit(coordinates[count], split = " " , fixed = TRUE)[[1]][1]
-                latitude[count]  <-  strsplit(coordinates[count], split = " " , fixed = TRUE )[[1]][2]        
-        }
-        
-        else
-        {
-                
-                longitude[count] <- NA
-                latitude[count]  <- NA
-        }
-}
+## Shortlisting Speed Data
 
+SpeedDATA05 <- DATA05[DATA05$PhenomenonID == "Speed" ,]
+SpeedDATA05 <- SpeedDATA05[,c("TimeStamp" , "NumericValue")]
+SpeedDATA05$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA05$TimeStamp))))
 
+## Final Speed and Location Data Corresponding to DATA05 . Also adding Direction and Route ID to the data
 
-
-## Assimilating Longitude and Latitude Data to Original DataFrame
-
-DATA05 <- transform(DATA05 , Longitude = longitude , Latitude = latitude , TS = as.POSIXct(TimeStamp))
-rm("Index" , "longitude" ,"latitude" , "coordinates")
+FinalDATA05 <- merge(LocationDATA05 , SpeedDATA05 , by = "TS" )
+FinalDATA05 <- transform(FinalDATA05 , RouteID = "K9" , Direction = "PickUp")
+rm("SpeedDATA05","LocationDATA05","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
 
 
-
-##########
-
+#######################################################################################################################
 
 
+###  Cleaning Up the Latitude and Longitude Data and Merging it With Speed Data for Data Frame DATA06  ###
 
-Index <- complete.cases(DATA06[,c("Location")])
-coordinates <- as.character(DATA06$Location)
-Index <- grepl("POINT" , as.character(coordinates))
+
+## First subsetting the location data and thereafter Identifying the GPS data 
+## and extracting Longitude and Latitude data from it 
+
+
+LocationDATA06 <- DATA06[DATA06$PhenomenonID == "Location" ,] 
+coordinates <- as.character(LocationDATA06$Location)
+Index <- grepl("^POINT" , as.character(coordinates)) 
+LocationDATA06 <- LocationDATA06[Index, ] 
 coordinates[Index] <- substr(coordinates[Index] , start = 7 , stop = nchar(coordinates[Index]) - 1 )
-longitude <- character(length(coordinates))
-latitude <- character(length(coordinates))
+coordinates <- coordinates[Index]
+LocationDATA06$GPSXY <- coordinates
+LocationDATA06 <- LocationDATA06[,-c(9:10)]
+gpsdata <- strsplit(coordinates , " ") 
+Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
+Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
+Longitude <- as.numeric(Longitude)
+Latitude <- as.numeric(Latitude)
+LocationDATA06$Longitude  <- Longitude
+LocationDATA06$Latitude  <- Latitude
+LocationDATA06$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA06$TimeStamp))))
 
-for( count in 1: length(coordinates))
-{
-        if( Index[count])
-        {
-                longitude[count] <-  strsplit(coordinates[count], split = " " , fixed = TRUE)[[1]][1]
-                latitude[count]  <-  strsplit(coordinates[count], split = " " , fixed = TRUE )[[1]][2]        
-        }
-        
-        else
-        {
-                
-                longitude[count] <- NA
-                latitude[count]  <- NA
-        }
-}
+## Shortlisting Speed Data
 
-## Assimilating Longitude and Latitude Data to Original DataFrame
+SpeedDATA06 <- DATA06[DATA06$PhenomenonID == "Speed" ,]
+SpeedDATA06 <- SpeedDATA06[,c("TimeStamp" , "NumericValue")]
+SpeedDATA06$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA06$TimeStamp))))
 
-DATA06 <- transform(DATA06 , Longitude = longitude , Latitude = latitude , TS = as.POSIXct(TimeStamp))
-rm("Index" , "longitude" ,"latitude" , "coordinates")
+## Final Speed and Location Data Corresponding to DATA06 . Also adding Direction and Route ID to the data
+
+FinalDATA06 <- merge(LocationDATA06 , SpeedDATA06 , by = "TS" )
+FinalDATA06 <- transform(FinalDATA06 , RouteID = "V1" , Direction = "PickUp")
+rm("SpeedDATA06","LocationDATA06","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
+
+
+
+
+
+
+
 
 
 ##############################
