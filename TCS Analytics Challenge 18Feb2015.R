@@ -63,3 +63,71 @@ qplot(Longitude ,Latitude )
 FinalData01 <- merge(LocationDATA01 , SpeedDATA01, by = c("TSinSecs"))
 
 with(data = LocationDATA01 , plot(Latitude , Longitude , pch = 20 , col = "red"))
+
+
+
+## To remove leading and trailing spaces 
+gsub("^\\s+|\\s+$", "", X )
+
+####################################################Feb 24th , 2015 ############################################
+
+
+datawgps <- LocationDATA02[Index, ] 
+datawogps <- LocationDATA02[!Index, ] 
+
+gps <- datawogps$Location
+
+
+Index <- grepl("^POINT" , as.character(gps)) 
+
+gpsdata <- FinalDATA02[ ,c(11,12)]
+dist <- Distance(gpsdata)
+
+gpsdata$Distance <- dist
+
+
+k3lenght <- sum(FinalDATA01$Distance)
+
+data <- subset(FinalDATA01 , TimeStamp.x > '2013-08-01' & TimeStamp.x < '2013-08-02')
+
+
+
+
+
+wklydata <- list()
+
+for( wkday in 1:7)
+        wklydata[[wkday]] <- subset(FinalDATA01 , TimeStamp.x$wday == (wkday-1 ))
+
+wklydata <- apply(wklydata , )
+
+Sun <- wklydata[[1]]
+Mon <- wklydata[[2]]
+Tue <- wklydata[[3]]
+Wed <- wklydata[[4]]
+Thu <- wklydata[[5]]
+Fri <- wklydata[[6]]
+Sat <- wklydata[[7]]
+
+Sun <- transform(Sun , WkDay = "Sunday")
+Mon <- transform(Mon , WkDay = "Monday")
+Tue <- transform(Tue , WkDay = "Tuesday")
+Wed <- transform(Wed , WkDay = "Wednesday")
+Thu <- transform(Thu , WkDay = "Thursday")
+Fri <- transform(Fri , WkDay = "Friday")
+Sat <- transform(Sat , WkDay = "Saturday")
+
+Routek3 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+
+
+
+
+
+
+
+
+
+
+
+
+

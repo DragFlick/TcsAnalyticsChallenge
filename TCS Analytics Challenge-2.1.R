@@ -17,14 +17,14 @@ RADIANCONV <- PI/180
 
 ## Distance Function uses the HaverShine Formula to Evaluate The curved Distance 
 
-Distance <- function(gpsdata)
+DistanceXY <- function(gpsdata)
 {
         RADIUSOFEARTH <- 6378100
         RADIANCONV <- 3.14159265359/180
         
-        long <- gpsdata$Longitude * RADIANCONV
-        lat <- gpsdata$Latitude *  RADIANCONV
-        distance <- 0
+        long <- as.numeric(gpsdata$Longitude) * RADIANCONV
+        lat <- as.numeric(gpsdata$Latitude) *  RADIANCONV
+        distance <- as.numeric(0)
         
         for(idx in 2: length(long))
         {
@@ -186,9 +186,19 @@ Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
 Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
 Longitude <- as.numeric(Longitude)
 Latitude <- as.numeric(Latitude)
+
+## Creating Input Data Frame for Calculating Distance and then Evaluating Distances between adjoining Points 
+
+gpsdata <- data.frame(Longitude = Longitude , Latitude = Latitude)
+# Distance <- DistanceXY(gpsdata)
+
+
+
 LocationDATA01$Longitude  <- Longitude
 LocationDATA01$Latitude  <- Latitude
 LocationDATA01$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA01$TimeStamp))))
+# LocationDATA01$Distance <- Distance
+
 
 ## Shortlisting Speed Data
 
@@ -203,6 +213,37 @@ FinalDATA01 <- transform(FinalDATA01 , RouteID = "K3" , Direction = "PickUp")
 rm("SpeedDATA01","LocationDATA01","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
 
 
+
+## Categorizing data on the basis of Days of the week ## 
+
+
+
+wklydata <- list()
+
+for( wkday in 1:7)
+        wklydata[[wkday]] <- subset(FinalDATA01 , TimeStamp.x$wday == (wkday-1 ))
+
+Sun <- wklydata[[1]]
+Mon <- wklydata[[2]]
+Tue <- wklydata[[3]]
+Wed <- wklydata[[4]]
+Thu <- wklydata[[5]]
+Fri <- wklydata[[6]]
+Sat <- wklydata[[7]]
+
+Sun <- transform(Sun , WkDay = "Sunday")
+Mon <- transform(Mon , WkDay = "Monday")
+Tue <- transform(Tue , WkDay = "Tuesday")
+Wed <- transform(Wed , WkDay = "Wednesday")
+Thu <- transform(Thu , WkDay = "Thursday")
+Fri <- transform(Fri , WkDay = "Friday")
+Sat <- transform(Sat , WkDay = "Saturday")
+
+RouteK3 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+
+
+
 #####################################################################################################################
 
 
@@ -215,10 +256,7 @@ rm("SpeedDATA01","LocationDATA01","Index","Latitude" , "Longitude" ,"coordinates
 
 LocationDATA02 <- DATA02[DATA02$PhenomenonID == "Location" ,] 
 coordinates <- as.character(LocationDATA02$Location)
-
-
 Index <- grepl("^POINT" , as.character(coordinates)) 
-
 LocationDATA02 <- LocationDATA02[Index, ] 
 coordinates[Index] <- substr(coordinates[Index] , start = 7 , stop = nchar(coordinates[Index]) - 1 )
 coordinates <- coordinates[Index]
@@ -229,9 +267,18 @@ Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
 Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
 Longitude <- as.numeric(Longitude)
 Latitude <- as.numeric(Latitude)
+
+## Creating Input Data Frame for Calculating Distance and then Evaluating Distances between adjoining Points 
+
+gpsdata <- data.frame(Longitude = Longitude , Latitude = Latitude)
+# Distance <- DistanceXY(gpsdata)
+
+
+
 LocationDATA02$Longitude  <- Longitude
 LocationDATA02$Latitude  <- Latitude
 LocationDATA02$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA02$TimeStamp))))
+# LocationDATA02$Distance <- Distance
 
 ## Shortlisting Speed Data
 
@@ -244,6 +291,38 @@ SpeedDATA02$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA02$TimeStamp))
 FinalDATA02 <- merge(LocationDATA02 , SpeedDATA02 , by = "TS" )
 FinalDATA02 <- transform(FinalDATA02 , RouteID = "E1" , Direction = "PickUp")
 rm("SpeedDATA02","LocationDATA02","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
+
+
+
+#### Categorizing data based on Day Of Week 
+
+
+
+wklydata <- list()
+
+for( wkday in 1:7)
+        wklydata[[wkday]] <- subset(FinalDATA02 , TimeStamp.x$wday == (wkday-1 ))
+
+Sun <- wklydata[[1]]
+Mon <- wklydata[[2]]
+Tue <- wklydata[[3]]
+Wed <- wklydata[[4]]
+Thu <- wklydata[[5]]
+Fri <- wklydata[[6]]
+Sat <- wklydata[[7]]
+
+Sun <- transform(Sun , WkDay = "Sunday")
+Mon <- transform(Mon , WkDay = "Monday")
+Tue <- transform(Tue , WkDay = "Tuesday")
+Wed <- transform(Wed , WkDay = "Wednesday")
+Thu <- transform(Thu , WkDay = "Thursday")
+Fri <- transform(Fri , WkDay = "Friday")
+Sat <- transform(Sat , WkDay = "Saturday")
+
+
+RouteE1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+
 
 
 
@@ -269,9 +348,17 @@ Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
 Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
 Longitude <- as.numeric(Longitude)
 Latitude <- as.numeric(Latitude)
+
+
+gpsdata <- data.frame(Longitude = Longitude , Latitude = Latitude)
+# Distance <- DistanceXY(gpsdata)
+
+
+
 LocationDATA03$Longitude  <- Longitude
 LocationDATA03$Latitude  <- Latitude
 LocationDATA03$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA03$TimeStamp))))
+# LocationDATA03$Distance <- Distance
 
 ## Shortlisting Speed Data
 
@@ -284,6 +371,35 @@ SpeedDATA03$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA03$TimeStamp))
 FinalDATA03 <- merge(LocationDATA03 , SpeedDATA03 , by = "TS" )
 FinalDATA03 <- transform(FinalDATA03 , RouteID = "K1" , Direction = "PickUp")
 rm("SpeedDATA03","LocationDATA03","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
+
+
+## Categorizing data based on Days of Week ## 
+
+
+wklydata <- list()
+
+for( wkday in 1:7)
+        wklydata[[wkday]] <- subset(FinalDATA03 , TimeStamp.x$wday == (wkday-1 ))
+
+Sun <- wklydata[[1]]
+Mon <- wklydata[[2]]
+Tue <- wklydata[[3]]
+Wed <- wklydata[[4]]
+Thu <- wklydata[[5]]
+Fri <- wklydata[[6]]
+Sat <- wklydata[[7]]
+
+Sun <- transform(Sun , WkDay = "Sunday")
+Mon <- transform(Mon , WkDay = "Monday")
+Tue <- transform(Tue , WkDay = "Tuesday")
+Wed <- transform(Wed , WkDay = "Wednesday")
+Thu <- transform(Thu , WkDay = "Thursday")
+Fri <- transform(Fri , WkDay = "Friday")
+Sat <- transform(Sat , WkDay = "Saturday")
+
+
+RouteK1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
 
@@ -314,6 +430,21 @@ Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
 Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
 Longitude <- as.numeric(Longitude)
 Latitude <- as.numeric(Latitude)
+
+
+gpsdata <- data.frame(Longitude = Longitude , Latitude = Latitude)
+# Distance <- DistanceXY(gpsdata)
+
+
+
+LocationDATA04$Longitude  <- Longitude
+LocationDATA04$Latitude  <- Latitude
+LocationDATA04$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA04$TimeStamp))))
+# LocationDATA04$Distance <- Distance
+
+
+
+
 LocationDATA04$Longitude  <- Longitude
 LocationDATA04$Latitude  <- Latitude
 LocationDATA04$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA04$TimeStamp))))
@@ -330,6 +461,39 @@ FinalDATA04 <- merge(LocationDATA04 , SpeedDATA04 , by = "TS" )
 FinalDATA04 <- transform(FinalDATA04 , RouteID = "K4" , Direction = "PickUp")
 
 rm("SpeedDATA04","LocationDATA04","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
+
+
+### Categorizing data based on Days of the Week ## 
+
+
+
+wklydata <- list()
+
+for( wkday in 1:7)
+        wklydata[[wkday]] <- subset(FinalDATA04 , TimeStamp.x$wday == (wkday-1 ))
+
+Sun <- wklydata[[1]]
+Mon <- wklydata[[2]]
+Tue <- wklydata[[3]]
+Wed <- wklydata[[4]]
+Thu <- wklydata[[5]]
+Fri <- wklydata[[6]]
+Sat <- wklydata[[7]]
+
+Sun <- transform(Sun , WkDay = "Sunday")
+Mon <- transform(Mon , WkDay = "Monday")
+Tue <- transform(Tue , WkDay = "Tuesday")
+Wed <- transform(Wed , WkDay = "Wednesday")
+Thu <- transform(Thu , WkDay = "Thursday")
+Fri <- transform(Fri , WkDay = "Friday")
+Sat <- transform(Sat , WkDay = "Saturday")
+
+
+RouteK4 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+
+
+
 
 
 ######################################################################################################################
@@ -355,9 +519,20 @@ Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
 Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
 Longitude <- as.numeric(Longitude)
 Latitude <- as.numeric(Latitude)
+
+
+
+gpsdata <- data.frame(Longitude = Longitude , Latitude = Latitude)
+# Distance <- DistanceXY(gpsdata)
+
+
+
 LocationDATA05$Longitude  <- Longitude
 LocationDATA05$Latitude  <- Latitude
 LocationDATA05$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA05$TimeStamp))))
+# LocationDATA05$Distance <- Distance
+
+
 
 ## Shortlisting Speed Data
 
@@ -370,6 +545,39 @@ SpeedDATA05$TS <- as.integer(floor(as.numeric(as.POSIXct(SpeedDATA05$TimeStamp))
 FinalDATA05 <- merge(LocationDATA05 , SpeedDATA05 , by = "TS" )
 FinalDATA05 <- transform(FinalDATA05 , RouteID = "K9" , Direction = "PickUp")
 rm("SpeedDATA05","LocationDATA05","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
+
+
+
+## Categorizing Data in Terms of Days of Week 
+
+
+
+wklydata <- list()
+
+for( wkday in 1:7)
+        wklydata[[wkday]] <- subset(FinalDATA05 , TimeStamp.x$wday == (wkday-1 ))
+
+Sun <- wklydata[[1]]
+Mon <- wklydata[[2]]
+Tue <- wklydata[[3]]
+Wed <- wklydata[[4]]
+Thu <- wklydata[[5]]
+Fri <- wklydata[[6]]
+Sat <- wklydata[[7]]
+
+Sun <- transform(Sun , WkDay = "Sunday")
+Mon <- transform(Mon , WkDay = "Monday")
+Tue <- transform(Tue , WkDay = "Tuesday")
+Wed <- transform(Wed , WkDay = "Wednesday")
+Thu <- transform(Thu , WkDay = "Thursday")
+Fri <- transform(Fri , WkDay = "Friday")
+Sat <- transform(Sat , WkDay = "Saturday")
+
+
+RouteK9 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+
+
 
 
 #######################################################################################################################
@@ -395,9 +603,17 @@ Longitude <- sapply(gpsdata , function(gpsdata) { gpsdata[1]} )
 Latitude <-  sapply(gpsdata , function(gpsdata) {gpsdata[2]})
 Longitude <- as.numeric(Longitude)
 Latitude <- as.numeric(Latitude)
+
+gpsdata <- data.frame(Longitude = Longitude , Latitude = Latitude)
+# Distance <- DistanceXY(gpsdata)
+
+
+
 LocationDATA06$Longitude  <- Longitude
 LocationDATA06$Latitude  <- Latitude
 LocationDATA06$TS <- as.integer(floor(as.numeric(as.POSIXct(LocationDATA06$TimeStamp))))
+# LocationDATA06$Distance <- Distance
+
 
 ## Shortlisting Speed Data
 
@@ -412,6 +628,34 @@ FinalDATA06 <- transform(FinalDATA06 , RouteID = "V1" , Direction = "PickUp")
 rm("SpeedDATA06","LocationDATA06","Index","Latitude" , "Longitude" ,"coordinates" ,"gpsdata")
 
 
+## Categorizing data in days of week 
+
+
+
+wklydata <- list()
+
+for( wkday in 1:7)
+        wklydata[[wkday]] <- subset(FinalDATA06 , TimeStamp.x$wday == (wkday-1 ))
+
+Sun <- wklydata[[1]]
+Mon <- wklydata[[2]]
+Tue <- wklydata[[3]]
+Wed <- wklydata[[4]]
+Thu <- wklydata[[5]]
+Fri <- wklydata[[6]]
+Sat <- wklydata[[7]]
+
+Sun <- transform(Sun , WkDay = "Sunday")
+Mon <- transform(Mon , WkDay = "Monday")
+Tue <- transform(Tue , WkDay = "Tuesday")
+Wed <- transform(Wed , WkDay = "Wednesday")
+Thu <- transform(Thu , WkDay = "Thursday")
+Fri <- transform(Fri , WkDay = "Friday")
+Sat <- transform(Sat , WkDay = "Saturday")
+
+
+RouteV1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
 
@@ -419,14 +663,17 @@ rm("SpeedDATA06","LocationDATA06","Index","Latitude" , "Longitude" ,"coordinates
 
 
 
-##############################
+#####################################################################################################################
+
+### Consolidating Route data for all Buses 
 
 
-## TCS BUS DATA - Consolidating data for all files in a single Variable
+TCSBusRouteData <- rbind(FinalDATA01 ,FinalDATA02 ,FinalDATA03 , FinalDATA04 ,FinalDATA05 ,FinalDATA06 )
+
+TCSBusRouteData 
 
 
-TCSBUSMASTERDATA <- rbind(DATA01 ,DATA02 ,DATA03 , DATA04 ,DATA05 ,DATA06 )
-data <- TCSBUSMASTERDATA
+data <- TCSBusRouteData
 
 
 
