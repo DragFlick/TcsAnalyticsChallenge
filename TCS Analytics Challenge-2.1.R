@@ -2,6 +2,10 @@
 # setwd("C:/Users/179029/Desktop/TCS TACTICS - DATA ANALYTICS CHALLENGE")
 #setwd("C:/DUMPS - CHITRESH - NDLS/TCS TACTICS - DATA ANALYTICS CHALLENGE")
 #setwd("C:/CHITRESH - DUMPS/TCS DATA ANALYTICS CHALLENGE") 
+# paths <- c( "C:/Program Files/R/R-3.1.2/library" , "C:/Program Files/R/R-3.1.2/ImportedLibrary")
+# .libPaths(paths)
+
+
 options(digits = 20)
 
 ## Radius of Earth in Meters 
@@ -18,29 +22,57 @@ RADIANCONV <- PI/180
 ## Distance Function uses the HaverShine Formula to Evaluate The curved Distance 
 
 DistanceXY <- function(gpsdata)
+        
 {
         RADIUSOFEARTH <- 6378100
         RADIANCONV <- 3.14159265359/180
         
-        long <- as.numeric(gpsdata$Longitude) * RADIANCONV
-        lat <- as.numeric(gpsdata$Latitude) *  RADIANCONV
-        distance <- as.numeric(0)
-        
-        for(idx in 2: length(long))
+        if(nrow(gpsdata) > 1)
+                
         {
-                dx <- lat[idx] - lat[idx-1]
-                dy <- long[idx] - long[idx-1]
-                # "semichordlenght" is square of half the chord length between the points.                
-                semichordlenght <- sin(dx/2)^2 + cos(lat[idx])*cos(lat[idx-1]) * sin(dy)^2  # 
-                # "omega" is angular Distance in Radians        
-                omega <- 2 * atan2(sqrt(semichordlenght) , sqrt(1-semichordlenght)) 
-                distance <- c(distance , omega*RADIUSOFEARTH  )               
+                long <- as.numeric(gpsdata$Longitude) * RADIANCONV
+                lat <- as.numeric(gpsdata$Latitude) *  RADIANCONV
+                distance <- as.numeric(0)
+                
+                for(idx in 2: length(long))
+                {
+                        dx <- lat[idx] - lat[idx-1]
+                        dy <- long[idx] - long[idx-1]
+                        # "semichordlenght" is square of half the chord length between the points.                
+                        semichordlenght <- sin(dx/2)^2 + cos(lat[idx])*cos(lat[idx-1]) * sin(dy)^2  # 
+                        # "omega" is angular Distance in Radians        
+                        omega <- 2 * atan2(sqrt(semichordlenght) , sqrt(1-semichordlenght)) 
+                        distance <- c(distance , omega*RADIUSOFEARTH  )               
+                }
+                
+                distance
         }
         
-        distance
-        
+        else
+                distance <- 0
 }
 
+
+
+## Function to Evaluate Cumulative Distance Covered
+
+
+
+CumDist <- function(DaysData)
+{
+        
+        dist <- DaysData$Distance
+        TotDist <- numeric(length(dist))
+        TotDist[1] <- 0
+        
+        for ( idx in 2 : length(dist))
+        {
+                TotDist[idx] <- sum(dist[1:idx])
+        }
+        
+        TotDist
+        
+}
 
 
 ##########################################################################
@@ -48,16 +80,16 @@ DistanceXY <- function(gpsdata)
 
 
 
-library(sqldf)
-
-
-Inpfilenames <- c( "./data/Siruseri-BusData-4Tactics.csv",
-                   "./data/Siruseri-BusData-4Tactics-E1.csv",
-                   "./data/Siruseri-BusData-4Tactics-K1.csv",
-                   "./data/Siruseri-BusData-4Tactics-K4.csv",
-                   "./data/Siruseri-BusData-4Tactics-K9.csv",
-                   "./data/Siruseri-BusData-4Tactics-V1.csv"
-)
+# library(sqldf)
+# 
+# 
+# Inpfilenames <- c( "./data/Siruseri-BusData-4Tactics.csv",
+#                    "./data/Siruseri-BusData-4Tactics-E1.csv",
+#                    "./data/Siruseri-BusData-4Tactics-K1.csv",
+#                    "./data/Siruseri-BusData-4Tactics-K4.csv",
+#                    "./data/Siruseri-BusData-4Tactics-K9.csv",
+#                    "./data/Siruseri-BusData-4Tactics-V1.csv"
+# )
 
 ## DATA IMPORT 
 
@@ -166,6 +198,23 @@ levels(DATA06$ProcedureID) <- "00409DFF-FF581794"
 
 
 
+###################################################################################################
+
+## Adding Date Column to Dataset
+
+DATA01$Date <- as.POSIXlt(substr(as.character(DATA01$TimeStamp) , 1 ,10))
+DATA02$Date <- as.POSIXlt(substr(as.character(DATA02$TimeStamp) , 1 ,10))
+DATA03$Date <- as.POSIXlt(substr(as.character(DATA03$TimeStamp) , 1 ,10))
+DATA04$Date <- as.POSIXlt(substr(as.character(DATA04$TimeStamp) , 1 ,10))
+DATA05$Date <- as.POSIXlt(substr(as.character(DATA05$TimeStamp) , 1 ,10))
+
+ts <- as.character(DATA06$TimeStamp)
+ts <- substr(ts , 1, 10)
+ts <- as.POSIXlt(ts)
+DATA06$Date <- ts 
+
+rm("ts")
+
 ############################################################################################################################
 
 ###  Cleaning Up the Latitude and Longitude Data and Merging it With Speed Data for Data Frame DATA01  ###
@@ -241,7 +290,26 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 RouteK3 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
 RouteK3 <- transform(RouteK3 , WkDay = as.factor(WkDay))
-rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday" ,"FinalDATA01" )
+
+
+
+
+
+
+RouteK3Data <- data.frame()
+for (TripDate in as.character(unique(RouteK3$Date)))
+{
+        data <- subset(RouteK3 , Date == TripDate )
+        data <- data[order(data$TimeStamp.x) , ]
+        distxy <-DistanceXY(data)
+        data$Distance <- distxy
+        RouteLength <- CumDist(data)
+        data$RouteLength <- RouteLength
+        RouteK3Data <- rbind(RouteK3Data , data)
+}
+
+
 
 
 
@@ -323,7 +391,24 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 RouteE1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
 RouteE1 <- transform(RouteE1 , WkDay = as.factor(WkDay))
-rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday" , "FinalDATA02")
+
+
+
+
+RouteE1Data <- data.frame()
+for (TripDate in as.character(unique(RouteE1$Date)))
+{
+        data <- subset(RouteE1 , Date == TripDate )
+        data <- data[order(data$TimeStamp.x) , ]
+        distxy <-DistanceXY(data)
+        data$Distance <- distxy
+        RouteLength <- CumDist(data)
+        data$RouteLength <- RouteLength
+        RouteE1Data <- rbind(RouteE1Data , data)
+}
+
+
 
 
 
@@ -402,9 +487,20 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 RouteK1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
 RouteK1 <- transform(RouteK1 , WkDay = as.factor(WkDay))
-rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday" , "FinalDATA03")
 
 
+RouteK1Data <- data.frame()
+for (TripDate in as.character(unique(RouteK1$Date)))
+{
+        data <- subset(RouteK1 , Date == TripDate )
+        data <- data[order(data$TimeStamp.x) , ]
+        distxy <-DistanceXY(data)
+        data$Distance <- distxy
+        RouteLength <- CumDist(data)
+        data$RouteLength <- RouteLength
+        RouteK1Data <- rbind(RouteK1Data , data)
+}
 
 
 
@@ -494,9 +590,21 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 RouteK4 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
 RouteK4 <- transform(RouteK4 , WkDay = as.factor(WkDay))
-rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday" , "FinalDATA04")
 
 
+
+RouteK4Data <- data.frame()
+for (TripDate in as.character(unique(RouteK4$Date)))
+{
+        data <- subset(RouteK4 , Date == TripDate )
+        distxy <-DistanceXY(data)
+        data <- data[order(data$TimeStamp.x) , ]
+        data$Distance <- distxy
+        RouteLength <- CumDist(data)
+        data$RouteLength <- RouteLength
+        RouteK4Data <- rbind(RouteK4Data , data)
+}
 
 
 
@@ -581,9 +689,20 @@ Sat <- transform(Sat , WkDay = "Saturday")
 RouteK9 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
 RouteK9 <- transform(RouteK9 , WkDay = as.factor(WkDay))
 
-rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday" , "FinalDATA05")
 
 
+RouteK9Data <- data.frame()
+for (TripDate in as.character(unique(RouteK9$Date)))
+{
+        data <- subset(RouteK9 , Date == TripDate )
+        data <- data[order(data$TimeStamp.x) , ]
+        distxy <-DistanceXY(data)
+        data$Distance <- distxy
+        RouteLength <- CumDist(data)
+        data$RouteLength <- RouteLength
+        RouteK9Data <- rbind(RouteK9Data , data)
+}
 
 
 #######################################################################################################################
@@ -662,24 +781,31 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 RouteV1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
 RouteV1 <- transform(RouteV1 , WkDay = as.factor(WkDay))
-rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday" , "FinalDATA06")
 
 
 
 
+RouteV1Data <- data.frame()
+for (TripDate in as.character(unique(RouteV1$Date)))
+{
+        data <- subset(RouteV1 , Date == TripDate )
+        data <- data[order(data$TimeStamp.x) , ]
+        distxy <-DistanceXY(data)
+        data$Distance <- distxy
+        RouteLength <- CumDist(data)
+        data$RouteLength <- RouteLength
+        RouteV1Data <- rbind(RouteV1Data , data)
+}
 
 
+rm("RouteK3" , "RouteE1" , "RouteK1" , "RouteK4" , "RouteK9" , "RouteV1")
 
 #####################################################################################################################
 
 ### Consolidating Route data for all Buses 
 
-
-TCSBusRouteData <- rbind(FinalDATA01 ,FinalDATA02 ,FinalDATA03 , FinalDATA04 ,FinalDATA05 ,FinalDATA06 )
-RouteDataDayWise <- rbind(RouteK3 , RouteE1 , RouteK1 , RouteK4 , RouteK9 , RouteV1)
-
-
-
+TCSBusRouteData <- rbind(RouteK3Data , RouteE1Data , RouteK1Data , RouteK4Data , RouteK9Data , RouteV1Data)
 data <- TCSBusRouteData
 
 
@@ -787,5 +913,7 @@ plotdata$Latitude <- as.numeric(as.character(plotdata$Latitude ))
 # jul1$CumDist <- sumdist
 # 
 # #########
-# 
-# 
+
+
+data <- subset(FinalDATA01 , Date == "2013-08-01 IST")
+[s]
