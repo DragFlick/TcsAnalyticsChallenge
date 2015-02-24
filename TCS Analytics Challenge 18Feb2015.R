@@ -97,9 +97,7 @@ data <- subset(FinalDATA01 , TimeStamp.x > '2013-08-01' & TimeStamp.x < '2013-08
 wklydata <- list()
 
 for( wkday in 1:7)
-        wklydata[[wkday]] <- subset(FinalDATA01 , TimeStamp.x$wday == (wkday-1 ))
-
-wklydata <- apply(wklydata , )
+        wklydata[[wkday]] <- subset(FinalDATA04 , TimeStamp.x$wday == (wkday-1 ))
 
 Sun <- wklydata[[1]]
 Mon <- wklydata[[2]]
@@ -117,13 +115,25 @@ Thu <- transform(Thu , WkDay = "Thursday")
 Fri <- transform(Fri , WkDay = "Friday")
 Sat <- transform(Sat , WkDay = "Saturday")
 
-Routek3 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+
+RouteK4 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
 
 
+jul1
 
+dist <- jul1$Distance
+sumdist <- numeric(length(dist))
+sumdist[1] <- 0
 
+for ( idx in 2 : length(dist))
+{
+        sumdist[idx] <- sum(dist[1:idx])
+}
+
+jul1$CumDist <- sumdist
 
 
 

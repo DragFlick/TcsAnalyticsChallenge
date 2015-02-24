@@ -240,6 +240,7 @@ Fri <- transform(Fri , WkDay = "Friday")
 Sat <- transform(Sat , WkDay = "Saturday")
 
 RouteK3 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+RouteK3 <- transform(RouteK3 , WkDay = as.factor(WkDay))
 rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
@@ -321,6 +322,7 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 
 RouteE1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+RouteE1 <- transform(RouteE1 , WkDay = as.factor(WkDay))
 rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
@@ -399,6 +401,7 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 
 RouteK1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+RouteK1 <- transform(RouteK1 , WkDay = as.factor(WkDay))
 rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
@@ -490,6 +493,7 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 
 RouteK4 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+RouteK4 <- transform(RouteK4 , WkDay = as.factor(WkDay))
 rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
@@ -575,6 +579,8 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 
 RouteK9 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+RouteK9 <- transform(RouteK9 , WkDay = as.factor(WkDay))
+
 rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
@@ -655,6 +661,7 @@ Sat <- transform(Sat , WkDay = "Saturday")
 
 
 RouteV1 <- rbind(Sun , Mon , Tue , Wed , Thu , Fri ,Sat)
+RouteV1 <- transform(RouteV1 , WkDay = as.factor(WkDay))
 rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
@@ -669,8 +676,8 @@ rm("wklydata" , "Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat" , "wkday")
 
 
 TCSBusRouteData <- rbind(FinalDATA01 ,FinalDATA02 ,FinalDATA03 , FinalDATA04 ,FinalDATA05 ,FinalDATA06 )
+RouteDataDayWise <- rbind(RouteK3 , RouteE1 , RouteK1 , RouteK4 , RouteK9 , RouteV1)
 
-TCSBusRouteData 
 
 
 data <- TCSBusRouteData
@@ -765,7 +772,20 @@ plotdata$Latitude <- as.numeric(as.character(plotdata$Latitude ))
 
 
 
-
-
-
-
+# 
+# ##### 
+# 
+# dist <- jul1$Distance
+# sumdist <- numeric(length(dist))
+# sumdist[1] <- 0
+# 
+# for ( idx in 2 : length(dist))
+# {
+#         sumdist[idx] <- sum(dist[1:idx])
+# }
+# 
+# jul1$CumDist <- sumdist
+# 
+# #########
+# 
+# 
