@@ -136,6 +136,68 @@ for ( idx in 2 : length(dist))
 jul1$CumDist <- sumdist
 
 
+RouteK1Data <- data.frame()
+
+for (TripDate in as.character(unique(RouteK1$Date)))
+{
+        data <- subset(RouteK1 , Date == TripDate )
+        data <- data[order(data$TimeStamp.x) , ]
+        distxy <-DistanceXY(data)
+        data$Distance <- distxy
+        RouteLength <- CumDist(data)
+        data$RouteLength <- RouteLength
+        RouteK1Data <- rbind(RouteK1Data , data)
+}
+
+
+k1list <- list()
+for (TripDate in as.character(unique(RouteK1$Date)))
+{
+        k1list[[TripDate]] <- subset(RouteK1 , Date == TripDate )
+        
+}
+
+
+names(k1list)
+count <- sapply(k1list , nrow)
+
+
+
+unique(RouteK1$Date)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
